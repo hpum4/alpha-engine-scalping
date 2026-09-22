@@ -88,8 +88,8 @@ with tab3:
             datos = (float(precio_actual), float(sma7), float(sma25), float(vol15),
                      float(p_xgb), float(p_lstm), float(s_bert), float(p_ensamble),
                      float(posicion_kelly), float(monto_orden), accion, float(tp), float(sl))
-            exito = registrar_operacion_supabase(st.secrets["postgres"], datos)
+            exito, mensaje = registrar_operacion_supabase(st.secrets["postgres"], datos)
             if exito:
                 st.success("¡Operación guardada exitosamente en la base de datos de Supabase!")
             else:
-                st.error("Ocurrió un error al conectar con Supabase. Revisa tus secretos.")
+                st.error(f"Error de conexión con Supabase: {mensaje}")

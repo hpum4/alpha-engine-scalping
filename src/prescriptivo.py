@@ -14,14 +14,16 @@ def calcular_criterio_kelly(prob_ganar, ratio_b=2.0, multiplicador=0.36):
     return posicion_final
 
 def registrar_operacion_supabase(config_db, datos_operacion):
-    """Persistencia transaccional en PostgreSQL de Supabase."""
+    """Persistencia transaccional en PostgreSQL de Supabase con SSL obligatorio."""
     try:
         conn = psycopg2.connect(
             host=config_db['host'],
             database=config_db['database'],
             user=config_db['user'],
             password=config_db['password'],
-            port=config_db['port']
+            port=config_db['port'],
+            sslmode='require',          # REQUERIDO POR SUPABASE CLOUD
+            connect_timeout=10
         )
         cursor = conn.cursor()
         query = """
@@ -34,7 +36,6 @@ def registrar_operacion_supabase(config_db, datos_operacion):
         conn.commit()
         cursor.close()
         conn.close()
-        return True
+        return True, "Operación guardada exitosamente"
     except Exception as e:
-        print(f"Error al guardar en Supabase: {e}")
-        return False
+        return False, str(e)
