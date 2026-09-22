@@ -11,31 +11,31 @@ st.set_page_config(page_title="Alpha Engine - Scalping BA", layout="wide")
 st.title("⚡ Alpha Engine: Analítica en Tiempo Real & Scalping Financiero")
 st.markdown("**Proyecto de Grado - Fundamentos de Business Analytics (UNFV - FIIS)** | *Grupo N° 6*")
 
-# Ingesta en tiempo real con validación
-with st.spinner("Conectando con Binance API y calculando indicadores ETL..."):
+# Ingesta en tiempo real con Fallback Resiliente
+with st.spinner("Conectando con motor de ingesta y calculando indicadores ETL..."):
     df_raw = obtener_datos_binance()
     df_etl = calcular_indicadores_etl(df_raw)
 
-# Control si la API no devuelve suficiente información
 if df_etl.empty:
-    st.warning("⚠️ No se pudieron obtener suficientes datos en tiempo real de Binance API en este momento.")
-    st.info("Reintentando conexión... Por favor haz clic en el botón 'Rerun' o recarga la página en unos segundos.")
-    if st.button("🔄 Reintentar Carga de Datos"):
-        st.rerun()
+    st.error("Error crítico al procesar la ingesta de datos.")
     st.stop()
 
-# Si hay datos válidos, continúa normalmente
 precio_actual = df_etl['close'].iloc[-1]
 sma7 = df_etl['SMA_7'].iloc[-1]
 sma25 = df_etl['SMA_25'].iloc[-1]
 vol15 = df_etl['VOL_15'].iloc[-1]
+es_sim = df_etl['es_simulado'].iloc[-1] if 'es_simulado' in df_etl.columns else False
 
 # Tarjetas superiores de métricas
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("Precio Bitcoin", f"\${precio_actual:,.2f} USD")
 c2.metric("Media Móvil (SMA 7)", f"\${sma7:,.2f} USD")
 c3.metric("Volatilidad (VOL 15)", f"{vol15:.4f}%")
-c4.metric("Estado de Ingesta", "ONLINE", delta="SLA < 100ms")
+
+if not es_sim:
+    c4.metric("Estado de Ingesta", "ONLINE (Binance API)", delta="SLA < 100ms")
+else:
+    c4.metric("Estado de Ingesta", "SIMULADOR EN VIVO", delta="Fallback Anti-Bloqueo IP")
 
 # Pestañas analíticas (Unidad 4 - Visualización)
 tab1, tab2, tab3 = st.tabs(["📈 Panel Descriptivo (EDA)", "🧠 Panel Predictivo (IA)", "🎯 Panel Prescriptivo (Kelly)"])
