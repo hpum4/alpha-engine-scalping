@@ -11,11 +11,20 @@ st.set_page_config(page_title="Alpha Engine - Scalping BA", layout="wide")
 st.title("⚡ Alpha Engine: Analítica en Tiempo Real & Scalping Financiero")
 st.markdown("**Proyecto de Grado - Fundamentos de Business Analytics (UNFV - FIIS)** | *Grupo N° 6*")
 
-# Ingesta en tiempo real
+# Ingesta en tiempo real con validación
 with st.spinner("Conectando con Binance API y calculando indicadores ETL..."):
     df_raw = obtener_datos_binance()
     df_etl = calcular_indicadores_etl(df_raw)
 
+# Control si la API no devuelve suficiente información
+if df_etl.empty:
+    st.warning("⚠️ No se pudieron obtener suficientes datos en tiempo real de Binance API en este momento.")
+    st.info("Reintentando conexión... Por favor haz clic en el botón 'Rerun' o recarga la página en unos segundos.")
+    if st.button("🔄 Reintentar Carga de Datos"):
+        st.rerun()
+    st.stop()
+
+# Si hay datos válidos, continúa normalmente
 precio_actual = df_etl['close'].iloc[-1]
 sma7 = df_etl['SMA_7'].iloc[-1]
 sma25 = df_etl['SMA_25'].iloc[-1]

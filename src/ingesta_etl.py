@@ -4,26 +4,37 @@ import numpy as np
 
 def obtener_datos_binance(symbol="BTCUSDT", interval="1m", limit=100):
     """
-    Ingesta de precios en tiempo real de Bitcoin desde la API pública de Binance.
+    Ingesta protegida de precios en tiempo real desde la API pública de Binance.
     """
     url = f"https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}"
-    response = requests.get(url, timeout=10)
-    data = response.json()
-    
-    df = pd.DataFrame(data, columns=[
-        'open_time', 'open', 'high', 'low', 'close', 'volume',
-        'close_time', 'qav', 'num_trades', 'taker_base_vol', 'taker_quote_vol', 'ignore'
-    ])
-    
-    df['fecha_hora'] = pd.to_datetime(df['open_time'], unit='ms')
-    df['close'] = df['close'].astype(float)
-    df['volume'] = df['volume'].astype(float)
-    return df[['fecha_hora', 'close', 'volume']]
+    try:
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        
+        # Validar si Binance devolvió una lista válida
+        if not isinstance(data, list) or len(data) == 0:
+            return pd.DataFrame()
+            
+        df = pd.DataFrame(data, columns=[
+            'open_time', 'open', 'high', 'low', 'close', 'volume',
+            'close_time', 'qav', 'num_trades', 'taker_base_vol', 'taker_quote_vol', 'ignore'
+        ])
+        
+        df['fecha_hora'] = pd.to_datetime(df['open_time'], unit='ms')
+        df['close'] = df['close'].astype(float)
+        df['volume'] = df['volume'].astype(float)
+        return df[['fecha_hora', 'close', 'volume']]
+    except Exception as e:
+        print(f"Error al conectar con Binance API: {e}")
+        return pd.DataFrame()
 
 def calcular_indicadores_etl(df):
     """
-    Proceso ETL: Cálculo de medias móviles (SMA_7, SMA_25) y volatilidad (VOL_15).
+    Proceso ETL: Validación de filas suficientes antes de calcular SMA_7, SMA_25 y VOL_15.
     """
+    if df.empty or len(df) < 25:
+        return pd.DataFrame()
+        
     df = df.copy()
     df['SMA_7'] = df['close'].rolling(window=7).mean()
     df['SMA_25'] = df['close'].rolling(window=25).mean()
