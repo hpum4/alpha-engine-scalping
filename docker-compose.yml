@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  alpha-engine-app:
+    build: .
+    container_name: alpha_engine_container
+    ports:
+      - "8501:8501"
+    environment:
+      - PORT=8501
+    restart: always
